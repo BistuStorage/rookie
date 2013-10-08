@@ -35,6 +35,7 @@ class importfromexcel:
                 fout.write(x.xlsfile.file.read())
                 fout.close()
                 db.intodb(filedir+'/'+filename)
+                print "OK"
                 return render.importfromexcel(filename+" is imported successfully")
             except:
                 return render.importfromexcel("handle error!")
