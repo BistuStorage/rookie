@@ -1,46 +1,25 @@
-#coding=utf-8
-
 import psycopg2
 import xlrd
 
 dbcursor=None
 db=None
-
 def connect():
-    global db,dbcursor
-    db=psycopg2.connect(database='mydb',user='postgres',password='123456')
-    dbcursor=db.cursor()
-
+	global db,dbcursor
+	db=psycopg2.connect(database='mydb',user='postgres',password='allmylove')
+	dbcursor=db.cursor()
 def disconnect():
-    dbcursor.close()
-    db.close()
-    dbcursor=None
-    db=None
-
-def any2str(data):
-    if isinstance(data,unicode):
-        return "'" + data.encode('utf-8') + "'"
-    else:
-        return "'" + str(data) + "'"
-
+	global db,dbcursor
+	dbcursor.close()
+	db.close()
+	dbcursor=None
+	db=None
 def intodb(file):
-    global db,dbcursor
-    data=xlrd.open_workbook(file)
-    table=data.sheets()[0]
-    for r in xrange(1,table.nrows):
-        cmdstr = "insert into book values(" 
-        for c in xrange(table.ncols):
-            cmdstr += any2str(table.row(r)[c].value)
-            if c != table.ncols-1:
-                cmdstr += ","
-        cmdstr += ")"
-        dbcursor.execute(cmdstr)
-    db.commit()
-def search(content):
-    global db,dbcursor
-    #cmdstr = "select * from book where to_tsvector('chinesecfg',isbn || name)@@to_tsquery('chinesecfg','"+content+"')"
-    cmdstr="select * from book where tokenize(isbn)@@tokenize('"+content+"') or tokenize(name)@@tokenize('"+content+"')"
-    dbcursor.execute(cmdstr)
-    rtdata=dbcursor.fetchall()
-    db.commit()
-    return rtdata
+	global db,dbcursor
+	data=xlrd.open_workbook(file)
+	table=data.sheets()[0]
+	connect()
+	for i in range(1,table.nrows):
+		cmdstr="insert into book values('"+table.row(i)[0].value+"','"+table.row(i)[1].value+"')"
+		dbcursor.execute(cmdstr)
+	db.commit()
+	disconnect()
