@@ -1,2 +1,18 @@
-$def with(importfromexcelurl)
-<input type="button" value="import from excel" onclick="javascript:window.location.href='$importfromexcelurl'" >
+$def with(importfromexcelurl,sresult)
+<form method="post">
+<input type="text" name="content" />
+<input type="submit" name="search" value="搜索" />
+</form>
+
+<input type="button" value="import from excel" onclick="javascript:window.location.href='$importfromexcelurl'" />
+
+$if sresult:
+    <table border="1" width="100%">
+    <tr>
+        <th>isbn</th>
+        <th>name</th>
+    </tr>
+    $for sr in sresult:
+        <tr><td>$sr[0]</td><td>$sr[1]</td></tr>
+    </table>
+
