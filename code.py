@@ -3,32 +3,27 @@
 import web
 from web import form
 import db
+import table
+import sys
 
 web.config.debug = True 
 web.config.reload = True
 
 render = web.template.render('templates/')
-
-urls=(  '/','home',
-        '/import/fromexcel','importfromexcel',
-        '/custom','createtable'
-        )
-
-table_form = form.Form(
-        form.Textbox("tablename",description="tablename"),
-        form.Textbox("fieldnames",description="fieldnames"),
-        form.Textbox("fieldattrs",description="fieldattrs"),
-        form.Button("submit",type="submit",description="add"),
-        validators = [
-                form.Validator("Passwords did't match", lambda i: i.tablename != '')]
+urls = (  
+        '/table',table.app,
+        '/','home',
+        '/import/fromexcel','importfromexcel'
         )
 
 class home:
+
     def GET(self):
         importfromexcelurl="/import/fromexcel"
         return render.home(importfromexcelurl)
 
 class importfromexcel:
+
     def GET(self):
         return render.importfromexcel(None)
 
@@ -49,25 +44,15 @@ class importfromexcel:
         else:
             return render.importfromexcel("please choose the file.xlsfile is not uploaded")
 
-class createtable:
-
-    def GET(self):
-        f = table_form()
-        return render.createtable(f)
-
-    def POST(self):
-        f = table_form() 
-        if not f.validates():
-            return render.createtable(f)
-        else:
-            fields = dict(zip(f['fieldnames'].value.split(','),f['fieldattrs'].value.split(',')))
-            print fields
-            db.create_table(f['tablename'].value,fields)
-
-            raise web.seeother('/')
 
 if __name__ == "__main__":
 
+    web.internalerror = web.debugerror
     app=web.application(urls,globals()) 
+    if len(sys.argv) == 2 and sys.argv[1] == "init":
+        db.init()
+    elif len(sys.argv) > 1 :
+        print "Usage: code.py or code.py init"
+        sys.exit(0)
     db.connect()
     app.run()

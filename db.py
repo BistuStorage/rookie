@@ -27,10 +27,11 @@ def any2str(data):
         return str(data) 
 
 def insert_column(tablename,values):
-    slist = ' '.join(['%s' for i in values])
+    slist = ','.join(['%s' for i in values])
     sql = "INSERT INTO %s VALUES (%s)" % (any2str(tablename),slist)
     print sql
-    db.execute(sql,values)
+    print ' '.join(values)
+    dbcursor.execute(sql,values)
     db.commit()
 
 def intodb_xls(tablename,file):
@@ -45,14 +46,15 @@ def intodb_xls(tablename,file):
     insert_column(tablename,tuple(values))
 
 # fields is a dict
-def create_table(name,fields):
+def create_table(name,fields,attrs):
 
     cmd = "CREATE TABLE " + any2str(name) + "( "
-    values = []
+    fnames = []
+    values = [name]
     for fn in fields:
         cmd += any2str(fn) + " " + any2str(fields[fn]) + ","
-        values.append(any2str(fn))
-
+        fnames.append(any2str(fn))
+    values.append(','.join(fnames))
     cmd = cmd[:-1] + ");"
     insert_column('DBM',tuple(values))
     dbcursor.execute(cmd)
