@@ -17,23 +17,43 @@ def disconnect():
     dbcursor=None
     db=None
 
+def init():
+    dbcursor.execute("IF NOT EXISTS DBM CREATE TABLE DBM (name text primary key, fields text); ")
+    
 def any2str(data):
     if isinstance(data,unicode):
-        return "'" + data.encode('utf-8') + "'"
+        return data.encode('utf-8') 
     else:
-        return "'" + str(data) + "'"
+        return str(data) 
 
-def intodb(file):
+def insert_column(tablename,values):
+    slist = ' '.join(['%s' for i in values])
+    sql = "INSERT INTO %s VALUES (%s)" % (any2str(tablename),slist)
+    print sql
+    db.execute(sql,values)
+    db.commit()
+
+def intodb_xls(tablename,file):
     global db,dbcursor
     data=xlrd.open_workbook(file)
     table=data.sheets()[0]
-    connect()
+    values = []
     for r in xrange(1,table.nrows):
-        cmdstr = "insert into book values(" 
         for c in xrange(table.ncols):
-            cmdstr += any2str(table.row(r)[c].value)
-            if c != table.ncols-1:
-                cmdstr += ","
-        cmdstr += ")"
-        dbcursor.execute(cmdstr)
+            values.append(any2str(table.row(r)[c].value))
+    print values
+    insert_column(tablename,tuple(values))
+
+# fields is a dict
+def create_table(name,fields):
+
+    cmd = "CREATE TABLE " + any2str(name) + "( "
+    values = []
+    for fn in fields:
+        cmd += any2str(fn) + " " + any2str(fields[fn]) + ","
+        values.append(any2str(fn))
+
+    cmd = cmd[:-1] + ");"
+    insert_column('DBM',tuple(values))
+    dbcursor.execute(cmd)
     db.commit()
