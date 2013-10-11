@@ -42,7 +42,6 @@ def intodb_xls(tablename,file):
     for r in xrange(1,table.nrows):
         for c in xrange(table.ncols):
             values.append(any2str(table.row(r)[c].value))
-    print values
     insert_column(tablename,tuple(values))
 
 # fields is a dict
@@ -50,7 +49,7 @@ def create_table(name,fields,attrs):
 
     cmd = "CREATE TABLE " + any2str(name) + "( "
     fnames = []
-    values = [name]
+    values = [any2str(name)]
     for fn in fields:
         cmd += any2str(fn) + " " + any2str(fields[fn]) + ","
         fnames.append(any2str(fn))
