@@ -1,10 +1,10 @@
-#_*_ coding: utf-8 _*_
+#coding=utf-8
 
 import web
-from web import form
 import db
 import table
 import sys
+import urllib
 
 web.config.debug = True 
 web.config.reload = True
@@ -22,8 +22,26 @@ class home:
         importfromexcelurl="/import/fromexcel"
         return render.home(importfromexcelurl)
 
-class importfromexcel:
+def urlform2dic(data):
 
+    datalist=data.split('&')
+    datadic={}
+    for x in datalist:
+        y=x.split('=')
+        datadic[urllib.unquote(y[0])]=urllib.unquote(y[1])
+    return datadic
+
+class home:
+    def GET(self):
+        return render.home(importfromexcelurl,None)
+
+    def POST(self):
+        datadic=urlform2dic(web.data())
+        content=datadic['content']
+        rtdata=db.search(content)
+        return render.home(importfromexcelurl,rtdata)
+
+class importfromexcel:
     def GET(self):
         return render.importfromexcel(None)
 
