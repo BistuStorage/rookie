@@ -16,11 +16,7 @@ urls = (
         '/import/fromexcel','importfromexcel'
         )
 
-class home:
-
-    def GET(self):
-        importfromexcelurl="/import/fromexcel"
-        return render.home(importfromexcelurl)
+importfromexcelurl="/import/fromexcel"
 
 def urlform2dic(data):
 
@@ -61,7 +57,6 @@ class importfromexcel:
                 return render.importfromexcel("handle error!")
         else:
             return render.importfromexcel("please choose the file.xlsfile is not uploaded")
-
 
 if __name__ == "__main__":
 
