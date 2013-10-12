@@ -1,7 +1,7 @@
-$def with(message)
-$if message:
-	<p>$message</p>
+$def with(form,message)
+
+$if message: <p>$message</p>
 <form method="post" enctype="multipart/form-data">
-<input type="file" name="xlsfile" />
-<input type="submit" value="upload" />
+$:form.render()
+<input type="submit" value="导入" />
 </form>
