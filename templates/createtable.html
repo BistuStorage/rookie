@@ -1,5 +1,6 @@
-$def with(form)
+$def with(argvdic)
 
 <form method="POST">
-    $:form.render()
-<input type="submit" />    </form>
+$:argvdic['f'].render()
+<input type="submit" value="下一步" />
+</form>

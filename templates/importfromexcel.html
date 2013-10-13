@@ -1,7 +1,0 @@
-$def with(form,message)
-
-$if message: <p>$message</p>
-<form method="post" enctype="multipart/form-data">
-$:form.render()
-<input type="submit" value="导入" />
-</form>

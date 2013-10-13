@@ -3,26 +3,23 @@
 import web
 import urllib
 import models
+import form
 from config import render
-
-def urlform2dic(data):
-    datalist=data.split('&')
-    datadic={}
-    for x in datalist:
-        y=x.split('=')
-        datadic[urllib.unquote(y[0])]=urllib.unquote(y[1])
-    return datadic
 
 class search:
     def GET(self):
+        f=form.search_form()
         argvdic={}
-        return render.search(argvdic)
-    def POST(self):
-        datadic=urlform2dic(web.data())
-        content=datadic['content']
-        argvdic={}#传给模板的参数
-        if content:#搜索内容不能为空
-            rtdata=models.search(content)
-            argvdic['rtdata']=rtdata#结果可以为空
+        argvdic['f']=f
         return render.search(argvdic)
 
+    def POST(self):
+        f=form.search_form()
+        argvdic={}#传给模板的参数
+        argvdic['f']=f
+        if not f.validates():
+            return render.search(argvdic)
+        else:
+            rtdata=models.search_all_tables(f.d.content)
+            argvdic['rtdata']=rtdata#if no rows returns,then there is not col names
+            return render.search(argvdic)

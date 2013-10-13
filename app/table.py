@@ -2,26 +2,30 @@
 
 import web
 import form
-from form import DynamicForm
+from form import DynamicForm,custom_form
 import models
 from config import render
 
-urls = ('/createtable','createtable',
-        '/createcolumns/(.*)','createcolumns')
+urls = (
+        '/createtable/?','createtable',
+        '/createcolumns/(.*)','createcolumns'
+        )
 
 datatype = models.datatype
 
-table_form = form.table_form
-
 class createtable:
     def GET(self):
-        f = table_form()
-        return render.createtable(f)
+        f = form.table_form()
+        argvdic={}
+        argvdic['f']=f
+        return render.createtable(argvdic)
 
     def POST(self):
-        f = table_form() 
+        f = form.table_form() 
         if not f.validates():
-            return render.createtable(f)
+            argvdic={}
+            argvdic['f']=f
+            return render.createtable(argvdic)
         else:
            raise web.seeother('/createcolumns/' + f.d.tablename + '__' + f.d.columns)
 
@@ -31,7 +35,9 @@ class createcolumns:
         num = int(text.split('__')[1])
         f = DynamicForm()
         form.custom_form(f,num)
-        return render.columns(f)
+        argvdic={}
+        argvdic['f']=f
+        return render.columns(argvdic)
 
     def POST(self,text):
         num = int(text.split('__')[1])
@@ -39,7 +45,9 @@ class createcolumns:
         f = DynamicForm()
         custom_form(f,num)
         if not f.validates():
-            return render.columns(f)
+            argvdic={}
+            argvdic['f']=f
+            return render.columns(argvdic)
         else:
             fnames = [f["name" + str(i)].value for i in range(num)]
             fattrs = [f["attr" + str(i)].value for i in range(num)]

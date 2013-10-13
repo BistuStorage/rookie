@@ -1,8 +1,8 @@
 $def with(argvdic)
 
-<form method="post">
-<input type="text" name="content" />
-<input type="submit" name="search" value="搜索" />
+<form method="POST">
+$:argvdic['f'].render()
+<input type="submit" value="搜索" />
 </form>
 
 <!--<input type="button" value="import from excel" onclick="window.location.href='/importdata/fromexcel'" />

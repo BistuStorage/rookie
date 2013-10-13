@@ -47,14 +47,13 @@ def intodb_xls(tablename,file):
     if not columns:
         return 1 
     columns=columns[0].split(",")
-    data=xlrd.open_workbook(file)
-    if not data:
-        return 2
-    table=data.sheets()[0]
-    if not table:
+    try:
+        data=xlrd.open_workbook(file)
+        table=data.sheets()[0]
+    except:
         return 2
     if table.ncols!=len(columns):
-        return 2
+        return 3
     for r in xrange(1,table.nrows):
         values=[]
         for c in xrange(table.ncols):
@@ -76,7 +75,7 @@ def create_table(name,fields,attrs):
     dbcursor.execute(cmd)
     db.commit()
     
-def search(content):
+def search_all_tables(content):
     global db,dbcursor
     
     cmdstr="SELECT * FROM DBM;"#检索dbm表里面的所有记录表内容
@@ -84,7 +83,7 @@ def search(content):
     dbmdata=dbcursor.fetchall()
     rtdata={}
     for table in dbmdata:
-        tmpdata=searchonetable(table[0],tuple(table[1].split(',')),content)#检索一个表
+        tmpdata=search_one_table(table[0],tuple(table[1].split(',')),content)#检索一个表
         if tmpdata:
             rtdata[table[0]]=tmpdata
     if rtdata:
@@ -92,11 +91,18 @@ def search(content):
     else:
         return None
 
-def searchonetable(tablename,columnnames,content):#参数:表名,元组/列表类型的列名,搜索内容
+def search_one_table(tablename,columnnames,content):#参数:表名,元组/列表类型的列名,搜索内容
     global db,dbcursor
    
     #cmdstr="SELECT * FROM "+tablename+" WHERE tokenize("+" || ' ' || ".join(columnnames)+")@@tokenize('"+content+" "+content.lower()+" "+content.upper()+"');"
-    cmdstr="SELECT * FROM "+tablename+" WHERE to_tsvector("+" || ' ' || ".join(columnnames)+")@@to_tsquery('"+content+"');"
+    #cmdstr="SELECT * FROM "+tablename+" WHERE to_tsvector('chinesecfg',"+" || ' ' || ".join(columnnames)+")@@to_tsquery('chinesecfg','"+content+"');"
+    contentlists=content.split()
+    for i in range(len(contentlists)):
+        contentlists[i]="("+contentlists[i]+")"
+    cnlists=list(columnnames)
+    for i in range(len(cnlists)):
+        cnlists[i]=cnlists[i]+"~*'.*("+"|".join(contentlists)+").*'"
+    cmdstr="select * from "+tablename+" where "+" or ".join(cnlists)+";"
     print cmdstr
     dbcursor.execute(cmdstr)#执行检索
     rtdata=[]

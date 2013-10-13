@@ -6,19 +6,25 @@ import models
 from config import render
 
 urls=(
+        '/?','importdata',
         '/fromexcel','fromexcel'
     )
-fromexcel_form = form.fromexcel_form
-
+class importdata:
+    def GET(self):
+        return render.importdata()
 class fromexcel:
     def GET(self):
-        fef=fromexcel_form()
-        return render.importfromexcel(fef,None)
+        fef=form.fromexcel_form()
+        argvdic={}
+        argvdic['fef']=fef
+        return render.importdatafromexcel(argvdic)
     
     def POST(self):
-        fef=fromexcel_form()
+        fef=form.fromexcel_form()
+        argvdic={}
+        argvdic['fef']=fef
         if not fef.validates():
-            return render.importfromexcel(fef,None)
+            return render.importdatafromexcel(argvdic)
         else:
             filedir="uploadfile"
             fileinfo=web.input(xlsfile={})
@@ -33,8 +39,12 @@ class fromexcel:
                 message=u"此表不存在！"
             elif rt==2:
                 message=u"文件不符合要求！"
+            elif rt==3:
+                message=u"导入表与目标表列数不一致"
             else:
                 message=fileinfo.xlsfile.filename+u"成功导入"+fef.d.tablename+u"表！"
-            return render.importfromexcel(fromexcel_form(),message)
+            argvdic['fef']=form.fromexcel_form()#create a new one
+            argvdic['message']=message
+            return render.importdatafromexcel(argvdic)
 
 app=web.application(urls,locals())
