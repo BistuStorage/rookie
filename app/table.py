@@ -52,7 +52,7 @@ class createcolumns:
             fnames = [f["name" + str(i)].value for i in range(num)]
             fattrs = [f["attr" + str(i)].value for i in range(num)]
             fields = dict(zip(fnames,fattrs))
-            attrs = []
+            attrs = {'PK':f["primarykey"].value}
             models.create_table(tablename,fields,attrs)
             return "建表成功！"
 

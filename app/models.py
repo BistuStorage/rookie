@@ -61,7 +61,7 @@ def intodb_xls(tablename,file):
         insert_column(tablename,tuple(values))
     return 0
 
-# fields is a dict
+# fields and attrs are  dicts
 def create_table(name,fields,attrs):
     cmd="CREATE TABLE "+any2str(name)+"("
     fnames=[]
@@ -70,7 +70,10 @@ def create_table(name,fields,attrs):
         cmd+=any2str(fn)+" "+any2str(fields[fn])+","
         fnames.append(any2str(fn))
     values.append(','.join(fnames))
-    cmd=cmd[:-1]+");"
+    attrs['primarykey'] = any2str(attrs['primaykey'])
+    if attrs['primarykey'] != '':
+        cmd += "PRIMARY KEY(%s)" % attrs['primarykey']
+    cmd += ")"
     insert_column('DBM',tuple(values))
     dbcursor.execute(cmd)
     db.commit()

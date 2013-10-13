@@ -4,8 +4,8 @@ from web import form
 from models import datatype
 
 table_form = form.Form(
-        form.Textbox("tablename",form.notnull,description="表名"),
-        form.Textbox("columns",form.notnull,description="列数"),
+        form.Textbox("tablename",form.notnull),
+        form.Textbox("columns",form.notnull),
         )
 
 fromexcel_form = form.Form(
@@ -14,7 +14,7 @@ fromexcel_form = form.Form(
     )
 
 search_form=form.Form(
-    form.Textbox("content",form.notnull,description=""),
+    form.Textbox("content",form.notnull),
     )
 
 class DynamicForm(form.Form):
@@ -28,5 +28,4 @@ def custom_form(f,num):
         f.add_input(form.Textbox('name ' + str(idx),form.notnull))
         f.add_input(form.Dropdown('attr ' + str(idx),datatype))
     f.add_input(form.Textbox("primaykey"))
-    f.add_input(form.Button(u"提交",type="submit"))
     return f
