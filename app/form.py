@@ -27,5 +27,5 @@ def custom_form(f,num):
     for idx in range(num):
         f.add_input(form.Textbox('name' + str(idx),form.notnull))
         f.add_input(form.Dropdown('attr' + str(idx),datatype))
-    f.add_input(form.Textbox("primaykey"))
+    f.add_input(form.Textbox("primarykey"))
     return f

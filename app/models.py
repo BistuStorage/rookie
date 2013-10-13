@@ -70,9 +70,9 @@ def create_table(name,fields,attrs):
         cmd+=any2str(fn)+" "+any2str(fields[fn])+","
         fnames.append(any2str(fn))
     values.append(','.join(fnames))
-    attrs['primarykey'] = any2str(attrs['primaykey'])
-    if attrs['primarykey'] != '':
-        cmd += "PRIMARY KEY(%s)" % attrs['primarykey']
+    attrs['PK'] = any2str(attrs['PK'])
+    if attrs['PK'] != '':
+        cmd += "PRIMARY KEY(%s)" % attrs['PK']
     cmd += ")"
     insert_column('DBM',tuple(values))
     dbcursor.execute(cmd)
@@ -99,6 +99,7 @@ def search_one_table(tablename,columnnames,content):#参数:表名,元组/列表
    
     #cmdstr="SELECT * FROM "+tablename+" WHERE tokenize("+" || ' ' || ".join(columnnames)+")@@tokenize('"+content+" "+content.lower()+" "+content.upper()+"');"
     #cmdstr="SELECT * FROM "+tablename+" WHERE to_tsvector('chinesecfg',"+" || ' ' || ".join(columnnames)+")@@to_tsquery('chinesecfg','"+content+"');"
+    content = any2str(content)
     contentlists=content.split()
     for i in range(len(contentlists)):
         contentlists[i]="("+contentlists[i]+")"
