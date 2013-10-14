@@ -13,7 +13,11 @@ urls = (
 
 datatype = models.datatype
 
-class createtable:
+class base(object):
+    def __init__(self):
+        web.header('Content-type','text/html')
+
+class createtable(base):
     def GET(self):
         f = form.table_form()
         argvdic={}
@@ -29,8 +33,7 @@ class createtable:
         else:
            raise web.seeother('/createcolumns/' + f.d.tablename + '__' + f.d.columns)
 
-
-class createcolumns:
+class createcolumns(base):
     def GET(self,text):
         num = int(text.split('__')[1])
         f = DynamicForm()
@@ -54,6 +57,7 @@ class createcolumns:
             fields = dict(zip(fnames,fattrs))
             attrs = {'PK':f["primarykey"].value.encode('utf-8')}
             models.create_table(tablename,fields,attrs)
-            raise web.seeother('/')
+#            raise web.seeother('/../')
+            return "ok"
 
 app = web.application(urls,locals()) 

@@ -22,7 +22,14 @@ def disconnect():
 
 def init():
     global db,dbcursor
-    dbcursor.execute("CREATE TABLE dbm (name text primary key, fields text);")
+    dbcursor.execute("CREATE TABLE dbm (name text, fields text);")
+
+def delcol(name):
+    global db,dbcursor
+    dbcursor.execute("drop table %s" % name)
+    dbcursor.execute("delete from dbm where name =  '%s'" % name)
+    dbcursor.commit()
+
 
 def any2str(data):
     if isinstance(data,unicode):
@@ -34,7 +41,7 @@ def insert_column(tablename,values):
     global db,dbcursor
     slist=','.join(['%s' for i in values])
     sql="INSERT INTO %s VALUES (%s)" % (any2str(tablename),slist)
-    print sql
+    print ' '.join(values)
     dbcursor.execute(sql,values)
     db.commit()
 
@@ -61,9 +68,11 @@ def intodb_xls(tablename,file):
         insert_column(tablename,tuple(values))
     return 0
 
-# fields and attrs are  dicts
+# fields and attrs are dicts
 def create_table(name,fields,attrs):
-    cmd="CREATE TABLE "+any2str(name)+"("
+    connect()
+    name = any2str(name)
+    cmd="CREATE TABLE "+name+"("
     fnames=[]
     values=[name]
     for fn in fields:
@@ -73,14 +82,16 @@ def create_table(name,fields,attrs):
     attrs['PK'] = any2str(attrs['PK'])
     if attrs['PK'] != '':
         cmd += "PRIMARY KEY(%s)" % attrs['PK']
-    cmd += ")"
-    insert_column('DBM',tuple(values))
+        cmd += ")"
+    else:
+        cmd = cmd[:-1] + ')'
     dbcursor.execute(cmd)
     db.commit()
+    insert_column('DBM',tuple(values))
     
 def search_all_tables(content):
     global db,dbcursor
-    
+    content = any2str(content)
     cmdstr="SELECT * FROM DBM;"#检索dbm表里面的所有记录表内容
     dbcursor.execute(cmdstr)
     dbmdata=dbcursor.fetchall()
@@ -99,7 +110,6 @@ def search_one_table(tablename,columnnames,content):#参数:表名,元组/列表
    
     #cmdstr="SELECT * FROM "+tablename+" WHERE tokenize("+" || ' ' || ".join(columnnames)+")@@tokenize('"+content+" "+content.lower()+" "+content.upper()+"');"
     #cmdstr="SELECT * FROM "+tablename+" WHERE to_tsvector('chinesecfg',"+" || ' ' || ".join(columnnames)+")@@to_tsquery('chinesecfg','"+content+"');"
-    content = any2str(content)
     contentlists=content.split()
     for i in range(len(contentlists)):
         contentlists[i]="("+contentlists[i]+")"
@@ -107,7 +117,6 @@ def search_one_table(tablename,columnnames,content):#参数:表名,元组/列表
     for i in range(len(cnlists)):
         cnlists[i]=cnlists[i]+"~*'.*("+"|".join(contentlists)+").*'"
     cmdstr="select * from "+tablename+" where "+" or ".join(cnlists)+";"
-    print cmdstr
     dbcursor.execute(cmdstr)#执行检索
     rtdata=[]
     rtdata.append(columnnames)
