@@ -35,31 +35,48 @@ def insert_column(tablename,values):
     slist=','.join(['%s' for i in values])
     sql="INSERT INTO %s VALUES (%s)" % (any2str(tablename),slist)
     print sql
-    dbcursor.execute(sql,values)
-    db.commit()
+    try:
+        dbcursor.execute(sql,values)
+        db.commit()
+        return 0
+    except:
+        db.rollback()
+        return 1
 
 def intodb_xls(tablename,file):
     global db,dbcursor
 
-    cmdstr="SELECT fields FROM dbm WHERE name='%s'" % (any2str(tablename),)
+    rtmessage={}
+    rtmessage['errorcode']=0
+    rtmessage['rightrownums']=0
+    rtmessage['wrongrownums']=0
+    cmdstr="SELECT fields FROM dbm WHERE name='%s';" % (any2str(tablename),)
     dbcursor.execute(cmdstr)
     columns=dbcursor.fetchone()
     if not columns:
-        return 1 
-    columns=columns[0].split(",")
+        rtmessage['errorcode']=1
+        return rtmessage
+    else:
+        columns=columns[0].split(",")
     try:
         data=xlrd.open_workbook(file)
         table=data.sheets()[0]
     except:
-        return 2
+        rtmessage['errorcode']=2
+        return rtmessage
     if table.ncols!=len(columns):
-        return 3
+        rtmessage['errorcode']=3
+        return rtmessage
     for r in xrange(1,table.nrows):
         values=[]
         for c in xrange(table.ncols):
             values.append(any2str(table.row(r)[c].value))
-        insert_column(tablename,tuple(values))
-    return 0
+        ret=insert_column(tablename,tuple(values))
+        if ret==0:
+            rtmessage['rightrownums']+=1
+        else:
+            rtmessage['wrongrownums']+=1
+    return rtmessage
 
 # fields and attrs are  dicts
 def create_table(name,fields,attrs):
@@ -81,6 +98,7 @@ def create_table(name,fields,attrs):
 def search_all_tables(content):
     global db,dbcursor
     
+    content = any2str(content)
     cmdstr="SELECT * FROM DBM;"#检索dbm表里面的所有记录表内容
     dbcursor.execute(cmdstr)
     dbmdata=dbcursor.fetchall()
@@ -99,7 +117,6 @@ def search_one_table(tablename,columnnames,content):#参数:表名,元组/列表
    
     #cmdstr="SELECT * FROM "+tablename+" WHERE tokenize("+" || ' ' || ".join(columnnames)+")@@tokenize('"+content+" "+content.lower()+" "+content.upper()+"');"
     #cmdstr="SELECT * FROM "+tablename+" WHERE to_tsvector('chinesecfg',"+" || ' ' || ".join(columnnames)+")@@to_tsquery('chinesecfg','"+content+"');"
-    content = any2str(content)
     contentlists=content.split()
     for i in range(len(contentlists)):
         contentlists[i]="("+contentlists[i]+")"
