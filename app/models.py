@@ -41,32 +41,49 @@ def insert_column(tablename,values):
     global db,dbcursor
     slist=','.join(['%s' for i in values])
     sql="INSERT INTO %s VALUES (%s)" % (any2str(tablename),slist)
-    print ' '.join(values)
-    dbcursor.execute(sql,values)
-    db.commit()
+    print sql
+    try:
+        dbcursor.execute(sql,values)
+        db.commit()
+        return 0
+    except:
+        db.rollback()
+        return 1
 
 def intodb_xls(tablename,file):
     global db,dbcursor
 
-    cmdstr="SELECT fields FROM dbm WHERE name='%s'" % (any2str(tablename),)
+    rtmessage={}
+    rtmessage['errorcode']=0
+    rtmessage['rightrownums']=0
+    rtmessage['wrongrownums']=0
+    cmdstr="SELECT fields FROM dbm WHERE name='%s';" % (any2str(tablename),)
     dbcursor.execute(cmdstr)
     columns=dbcursor.fetchone()
     if not columns:
-        return 1 
-    columns=columns[0].split(",")
+        rtmessage['errorcode']=1
+        return rtmessage
+    else:
+        columns=columns[0].split(",")
     try:
         data=xlrd.open_workbook(file)
         table=data.sheets()[0]
     except:
-        return 2
+        rtmessage['errorcode']=2
+        return rtmessage
     if table.ncols!=len(columns):
-        return 3
+        rtmessage['errorcode']=3
+        return rtmessage
     for r in xrange(1,table.nrows):
         values=[]
         for c in xrange(table.ncols):
             values.append(any2str(table.row(r)[c].value))
-        insert_column(tablename,tuple(values))
-    return 0
+        ret=insert_column(tablename,tuple(values))
+        if ret==0:
+            rtmessage['rightrownums']+=1
+        else:
+            rtmessage['wrongrownums']+=1
+    return rtmessage
 
 # fields and attrs are dicts
 def create_table(name,fields,attrs):

@@ -5,10 +5,11 @@ import form
 from form import DynamicForm,custom_form
 import models
 from config import render
+import re
 
 urls = (
         '/createtable/?','createtable',
-        '/createcolumns/(.*)','createcolumns'
+        ur'/createcolumns/([a-zA-Z0-9_\u4e00-\u9fa5]+--[1-9][0-9]?)$','createcolumns'#格式：中文、英文、数字、下划线--1到99
         )
 
 datatype = models.datatype
@@ -31,20 +32,22 @@ class createtable(base):
             argvdic['f']=f
             return render.createtable(argvdic)
         else:
-           raise web.seeother('/createcolumns/' + f.d.tablename + '__' + f.d.columns)
+           raise web.seeother('/createcolumns/' + f.d.tablename + '--' + f.d.columns)
 
 class createcolumns(base):
     def GET(self,text):
-        num = int(text.split('__')[1])
+        num = int(text.split('--')[1])
         f = DynamicForm()
         form.custom_form(f,num)
         argvdic={}
         argvdic['f']=f
         return render.columns(argvdic)
+        #else:
+        #    return "tablename is not supported."
 
     def POST(self,text):
-        num = int(text.split('__')[1])
-        tablename = text.split('__')[0]
+        num = int(text.split('--')[1])
+        tablename = text.split('--')[0]
         f = DynamicForm()
         custom_form(f,num)
         if not f.validates():
@@ -57,7 +60,5 @@ class createcolumns(base):
             fields = dict(zip(fnames,fattrs))
             attrs = {'PK':f["primarykey"].value.encode('utf-8')}
             models.create_table(tablename,fields,attrs)
-#            raise web.seeother('/../')
-            return "ok"
-
-app = web.application(urls,locals()) 
+            raise web.seeother('/../')
+app = web.application(urls,locals())
