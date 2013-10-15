@@ -11,6 +11,7 @@ urls=(
     )
 TABLE_NAME_ERR = u"表名格式：中文、英文、数字、下划线，文件非空！"
 UPLOADDIR = "uploadfile"
+SUC_UP_MSG = u"%s 成功导入 %s 表! 成功插入列数：%s 失败插入列数：%s"
 
 class importdata:
     def GET(self):
@@ -18,39 +19,26 @@ class importdata:
 
 class fromexcel:
     def GET(self):
-        fef=form.fromexcel_form()
-        argvdic={}
-        argvdic['fef']=fef
-        return render.importdatafromexcel(argvdic)
+        form = form.uploadfile_form()}
+        return render.uploadfile(form,msg)
     
     def POST(self):
-        fef=form.fromexcel_form()
-        argvdic={}
-        argvdic['fef']=fef
-        fileinfo=web.input(xlsfile={})
-        if not fef.validates():
-            argvdic['fef']=form.fromexcel_form()
-            argvdic['message']= TABLE_NAME_ERR
-            return render.importdatafromexcel(argvdic)
+        form = form.uploadfile_form()
+        xlsfile = web.input(xlsfile={}).xlsfile
+        if not form.validates():
+            msg = TABLE_NAME_ERR
+            return render.uploadfile(form,msg)
         else:
-            filedir= UPLOADDIR
-            filepath=fileinfo.xlsfile.filename.replace('\\','/')
-            filename=filepath.split('/')[-1]
-            fout=open(filedir+'/'+filename,'w')
-            fout.write(fileinfo.xlsfile.file.read())
+            filedir = UPLOADDIR
+            filepath = xlsfile.filename.replace('\\','/')
+            filename = filepath.split('/')[-1]
+            fout = open(filedir+'/'+filename,'w').write(xlsfile.file.read())
             fout.close()
-            rtmessage=models.intodb_xls(fef.d.tablename,filedir+'/'+filename)
-            message=""
-            if rtmessage['errorcode']==1:
-                message=u"此表不存在！"
-            elif rtmessage['errorcode']==2:
-                message=u"文件不符合要求！"
-            elif rtmessage['errorcode']==3:
-                message=u"导入表与目标表列数不一致"
-            else:
-                message=fileinfo.xlsfile.filename+u"成功导入"+fef.d.tablename+u"表！成功插入列数："+str(rtmessage['rightrownums'])+u"失败插入列数："+str(rtmessage['wrongrownums'])
-            argvdic['fef']=form.fromexcel_form()#create a new one
-            argvdic['message']=message
-            return render.importdatafromexcel(argvdic)
+
+            rtmsg = models.intodb_xls(fef.d.tablename,filedir+'/'+filename)
+            msg = rtmsg['errc']
+            if msg = '':
+                msg = SUC_UP_MSG %  (xlsfile.filename,form.d.tablename,rtmsg['nsuc'],rtmsg['nfai'])
+            return render.uploadfile(form,msg)
 
 app=web.application(urls,locals())

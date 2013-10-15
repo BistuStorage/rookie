@@ -8,6 +8,7 @@ db=None
 
 datatype = ['smallint','integer','bigint','real','numeric','double','serial','bigserial','text','date','time','boolean']
 strdatatype=['text']
+
 def connect():
     global db,dbcursor
     db=psycopg2.connect(database='mydb',user='postgres')
@@ -19,11 +20,6 @@ def disconnect():
     db.close()
     dbcursor=None
     db=None
-
-def init():
-    global db,dbcursor
-    dbcursor.execute("CREATE TABLE dbm (name text primary key, fields text);")
-    db.commit()
 
 def any2str(data):
     if isinstance(data,unicode):
@@ -96,10 +92,8 @@ def intodb_xls(tablename,file):
     db.commit()
     return rtmessage
 
-# fields and attrs are  dicts
 def create_table(name,fnames,fattrs,attrs):
     global db,dbcursor
-    #check tablename
     cmdstr="select name from dbm where name='"+any2str(name)+"';"
     try:
         dbcursor.execute(cmdstr)
@@ -111,7 +105,7 @@ def create_table(name,fnames,fattrs,attrs):
     #check pk
     pk = attrs['PK']
     pklist=pk.split(',')
-    flag=0
+    flag = 0
     for pl in pklist:
         for fn in fnames:
             if pl==fn:
@@ -120,14 +114,17 @@ def create_table(name,fnames,fattrs,attrs):
     if flag!=len(pklist):
         return 3                #pk must be made of one or more columns
     cmd="CREATE TABLE "+any2str(name)+"("
+    values = []
     for i in range(len(fnames)):
         cmd+=any2str(fnames[i])+" "+any2str(fattrs[i])+","
+        values.append(any2str(fname[i])+"_"+any2str(fattr[i]))
+
     cmd += "PRIMARY KEY(%s)" % any2str(pk)+");"
     try:
         dbcursor.execute(cmd)
         typelists=get_table_column_types('dbm')
         values=[name]
-        values.append(",".join(fnames))
+        values.append(",".join(values))
         insert_column('DBM',tuple(values),tuple(typelists))
         db.commit()
     except:

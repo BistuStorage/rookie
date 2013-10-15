@@ -12,7 +12,7 @@ table_form = form.Form(
         form.Textbox("columns",colnumrules,description=u"列数"),
         )
 
-fromexcel_form = form.Form(
+uploadfile_form = form.Form(
     form.Textbox("tablename",namerules,description=u"表名"),
     form.File("xlsfile",form.notnull,description=u"文件"),
     )

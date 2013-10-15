@@ -1,8 +1,0 @@
-$def with(argvdic)
-
-$if 'message' in argvdic:
-    <p>$argvdic['message']</p>
-<form method="post" enctype="multipart/form-data">
-$:argvdic['fef'].render()
-<input type="submit" value="导入" />
-</form>

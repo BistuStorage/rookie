@@ -7,19 +7,15 @@ import form
 from config import render
 
 class search:
+
     def GET(self):
-        f=form.search_form()
-        argvdic={}
-        argvdic['f']=f
-        return render.search(argvdic)
+        f = form.search_form()
+        return render.search(f)
 
     def POST(self):
-        f=form.search_form()
-        argvdic={}#传给模板的参数
-        argvdic['f']=f
+        f = form.search_form()
         if not f.validates():
-            return render.search(argvdic)
+            return render.search(f)
         else:
-            rtdata=models.search_all_tables(f.d.content)
-            argvdic['rtdata']=rtdata#if no rows returns,then there is not col names
-            return render.search(argvdic)
+            ret = models.search_all_tables(f.d.content)
+            return render.search(f,ret)
