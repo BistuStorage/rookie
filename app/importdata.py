@@ -9,9 +9,13 @@ urls=(
         '/?','importdata',
         '/fromexcel','fromexcel'
     )
+TABLE_NAME_ERR = u"表名格式：中文、英文、数字、下划线，文件非空！"
+UPLOADDIR = "uploadfile"
+
 class importdata:
     def GET(self):
         return render.importdata()
+
 class fromexcel:
     def GET(self):
         fef=form.fromexcel_form()
@@ -26,10 +30,10 @@ class fromexcel:
         fileinfo=web.input(xlsfile={})
         if not fef.validates():
             argvdic['fef']=form.fromexcel_form()
-            argvdic['message']=u"表名格式：中文、英文、数字、下划线，文件非空！"
+            argvdic['message']= TABLE_NAME_ERR
             return render.importdatafromexcel(argvdic)
         else:
-            filedir="uploadfile"
+            filedir= UPLOADDIR
             filepath=fileinfo.xlsfile.filename.replace('\\','/')
             filename=filepath.split('/')[-1]
             fout=open(filedir+'/'+filename,'w')

@@ -61,4 +61,5 @@ class createcolumns(base):
             attrs = {'PK':f["primarykey"].value.encode('utf-8')}
             models.create_table(tablename,fields,attrs)
             raise web.seeother('/../')
+
 app = web.application(urls,locals())
