@@ -1,5 +1,7 @@
 $def with (argvdic)
 
+$if 'message' in argvdic:
+    <p>$argvdic['message']</p>
 <form  method="post"> 
 $:argvdic['f'].render()
 <input type="submit" value="创建" />
