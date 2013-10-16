@@ -5,7 +5,7 @@ from models import datatype
 
 namerules=form.regexp(ur'^[a-zA-Z0-9_\u4e00-\u9fa5]*$',u'非空：中文、英文、数字、下划线')
 colnumrules=form.regexp(r'^[1-9][0-9]?$',u'必须是数字，且为1-99')
-pkrules=form.regexp(ur'^[a-zA-Z0-9_,\u4e00-\u9fa5]+$',u'非空：中文、英文、数字、下划线、逗号')
+pkrules=form.regexp(ur'^[a-zA-Z0-9_,\u4e00-\u9fa5]*$',u'非空：中文、英文、数字、下划线、逗号')
 
 table_form = form.Form(
         form.Textbox("tablename",namerules,description=u"表名"),

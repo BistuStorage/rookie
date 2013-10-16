@@ -9,6 +9,8 @@ db=None
 datatype = ['smallint','integer','bigint','real','numeric','double','serial','bigserial','text','date','time','boolean']
 strdatatype=['text']
 
+DB_ERROR=u"数据库操作出错！"
+
 def connect():
     global db,dbcursor
     db=psycopg2.connect(database='mydb',user='postgres')
@@ -20,13 +22,12 @@ def disconnect():
     db.close()
     dbcursor=None
     db=None
-
 def any2str(data):
     if isinstance(data,unicode):
         return data.encode('utf-8')
     else:
         return str(data)
-
+'''
 def get_table_column_types(tablename):
     global db,dbcursor
     cmdstr="select t.typname from pg_class c , pg_attribute a , pg_type t where c.relname='"+tablename+"' and a.attnum>0 and a.attrelid=c.oid and a.atttypid=t.oid;"
@@ -38,119 +39,163 @@ def get_table_column_types(tablename):
         return typelists
     except:
         return None
-
-def insert_column(tablename,values,typelists):
+'''
+def insert_column(tablename,values,coltyps):
     global db,dbcursor
+
     rvalues=list(values)
     for i in range(len(rvalues)):
         for t in strdatatype:
-            if t==typelists[i]:
+            if t==coltyps[i]:
                 rvalues[i]="'"+rvalues[i]+"'"
                 break
-    cmdstr="insert into "+tablename+" values ("+",".join(rvalues)+");"
+    cmdstr="insert into %s values (%s);"%(tablename,",".join(rvalues))
+    print cmdstr
     try:
         dbcursor.execute(cmdstr)
-        return 0
     except:
-        print "插入行："+",".join(values)+"失败！"
-        return 1
-
+        print "插入行： %s 失败！"%(",".join(values))
+        return DB_ERROR
+    return ''
 def intodb_xls(tablename,file):
     global db,dbcursor
-
-    rtmessage={}
-    rtmessage['errorcode']=0
-    rtmessage['rightrownums']=0
-    rtmessage['wrongrownums']=0
-    cmdstr="SELECT fields FROM dbm WHERE name='%s';" % (any2str(tablename),)
-    dbcursor.execute(cmdstr)
-    columns=dbcursor.fetchone()
-    if not columns:
-        rtmessage['errorcode']=1
-        return rtmessage
+    
+    #get fields
+    cmdstr="SELECT fields FROM dbm WHERE name='%s';" % (tablename)
+    print cmdstr
+    try:
+        dbcursor.execute(cmdstr)
+        fields=dbcursor.fetchone()
+        db.commit()
+    except:
+        db.rollback()
+        return DB_ERROR
+    if not fields:
+        return u"表不存在！"
     else:
-        columns=columns[0].split(",")
+        fields=fields[0].split(",")
+        coltyps=[]
+        for fs in fields:
+            coltyps.append(any2str(fs.split('_')[1]))
+    #open file
     try:
         data=xlrd.open_workbook(file)
         table=data.sheets()[0]
     except:
-        rtmessage['errorcode']=2
-        return rtmessage
-    if table.ncols!=len(columns):
-        rtmessage['errorcode']=3
-        return rtmessage
-    typelists=get_table_column_types(tablename)
+        return u"打开文件错误！"
+    #check table
+    if table.ncols!=len(coltyps):
+        return u"表的列数不符！"
+    #get data and insert
+    nsuc=0
+    nfai=0
     for r in xrange(1,table.nrows):
         values=[]
         for c in xrange(table.ncols):
             values.append(any2str(table.row(r)[c].value))
-        ret=insert_column(any2str(tablename),tuple(values),tuple(typelists))
-        if ret==0:
-            rtmessage['rightrownums']+=1
+        rt=insert_column(tablename,tuple(values),tuple(coltyps))
+        if rt=='':
+            nsuc+=1
         else:
-            rtmessage['wrongrownums']+=1
+            nfai+=1
     db.commit()
-    return rtmessage
+    return u"成功导入%s表！成功插入列数：%s 失败插入列数：%s"%(tablename,any2str(nsuc),any2str(nfai))
 
-def create_table(name,fnames,fattrs,attrs):
+def if_table_exists(tablename):
     global db,dbcursor
-    cmdstr="select name from dbm where name='"+any2str(name)+"';"
+
+    cmdstr="SELECT name FROM dbm WHERE name='%s' ;"%(tablename)
+    print cmdstr
     try:
         dbcursor.execute(cmdstr)
         rt=dbcursor.fetchall()
-        if rt:
-            return 2            #table exists
-    except:
-        return 1                #db error
-    #check pk
-    pk = attrs['PK']
-    pklist=pk.split(',')
-    flag = 0
-    for pl in pklist:
-        for fn in fnames:
-            if pl==fn:
-                flag+=1
-                break
-    if flag!=len(pklist):
-        return 3                #pk must be made of one or more columns
-    cmd="CREATE TABLE "+any2str(name)+"("
-    values = []
-    for i in range(len(fnames)):
-        cmd+=any2str(fnames[i])+" "+any2str(fattrs[i])+","
-        values.append(any2str(fname[i])+"_"+any2str(fattr[i]))
-
-    cmd += "PRIMARY KEY(%s)" % any2str(pk)+");"
-    try:
-        dbcursor.execute(cmd)
-        typelists=get_table_column_types('dbm')
-        values=[name]
-        values.append(",".join(values))
-        insert_column('DBM',tuple(values),tuple(typelists))
-        db.commit()
     except:
         db.rollback()
-        return 1
-    return 0
+        return DB_ERROR
+    db.commit()
+    if rt:
+        return u"表已存在！"
+    return ''
+# fields and attrs are  dicts
+def create_table(tablename,fnames,fattrs,attrs):
+    global db,dbcursor
+
+    #check tablename
+    rt=if_table_exists(tablename)
+    if rt!='':#error occur
+        return rt
+    #check pk
+    pk = attrs['PK']
+    if pk:#if pk is not null
+        pklist=pk.split(',')
+        flag=0
+        for pl in pklist:
+            for fn in fnames:
+                if pl==fn:
+                    flag+=1
+                    break
+        if flag!=len(pklist):
+            return u"主键非空时，其值必须是一个或多个列名，多个时用逗号隔开！"
+    #execute
+    cmdstr="CREATE TABLE "+tablename+"("
+    for i in range(len(fnames)):
+        cmdstr+=fnames[i]+" "+fattrs[i]+","
+    if pk:
+        cmdstr+="PRIMARY KEY(%s)"%pk
+    else:
+        cmdstr=cmdstr[:-1]
+    cmdstr += ");"
+    print cmdstr
+    try:
+        dbcursor.execute(cmdstr)
+    except:
+        db.rollback()
+        return DB_ERROR
+    typelists=['text','text']
+    values=[tablename]#tablename
+    values.append(",".join([fnames[i]+"_"+fattrs[i] for i in range(len(fnames))]))#colname_attr
+    rt=insert_column('dbm',tuple(values),tuple(typelists))
+    if rt!='':
+        db.rollback()#insert into dbm fail
+        return rt
+    db.commit()#create table and insert into dbm must be one
+    return ''
     
 def search_all_tables(content):
     global db,dbcursor
-    content = any2str(content)
-    cmdstr="SELECT * FROM DBM;"#检索dbm表里面的所有记录表内容
-    dbcursor.execute(cmdstr)
-    dbmdata=dbcursor.fetchall()
+    #return value:
+    #None if db error.
+    #{} if no result.
+    #rtdata({}type) if there is data.
+
+    cmdstr="SELECT * FROM DBM;"
+    print cmdstr
+    try:
+        dbcursor.execute(cmdstr)
+        dbmdata=dbcursor.fetchall()
+        db.commit()
+    except:
+        db.rollback()
+        return None#db error
     rtdata={}
     for table in dbmdata:
-        tmpdata=search_one_table(table[0],tuple(table[1].split(',')),content)#检索一个表
+        collists=table[1].split(',')
+        for i in range(len(collists)):
+            collists[i]=collists[i].split('_')[0]
+        tmpdata=search_one_table(any2str(table[0]),tuple(collists),content)#检索一个表
         if tmpdata:
             rtdata[table[0]]=tmpdata
-    if rtdata:
-        return rtdata#数据格式:{'表名1':searchonetable返回的list1,'表名2':searchonetable返回的list2...}
-    else:
-        return None
+        elif tmpdata==None:#db error ,return
+            return None
+    return rtdata#数据格式:{'表名1':searchonetable返回的list1,'表名2':searchonetable返回的list2...}
 
 def search_one_table(tablename,columnnames,content):#参数:表名,元组/列表类型的列名,搜索内容
     global db,dbcursor
-   
+    #return value:
+    #None if db error.
+    #[] if no search result.
+    #rtdata([]type) if there is data.
+
     #cmdstr="SELECT * FROM "+tablename+" WHERE tokenize("+" || ' ' || ".join(columnnames)+")@@tokenize('"+content+" "+content.lower()+" "+content.upper()+"');"
     cmdstr="SELECT * FROM "+tablename+" WHERE to_tsvector('chinesecfg',"+" || ' ' || ".join(columnnames)+")@@to_tsquery('chinesecfg','"+content+"');"
     '''
@@ -163,12 +208,18 @@ def search_one_table(tablename,columnnames,content):#参数:表名,元组/列表
         cnlists[i]=cnlists[i]+"~*'.*("+"|".join(contentlists)+").*'"
     cmdstr="select * from "+tablename+" where "+" or ".join(cnlists)+";"
     '''
-    dbcursor.execute(cmdstr)#执行检索
+    print cmdstr
+    try:
+        dbcursor.execute(cmdstr)#执行检索
+        db.commit()
+    except:
+        db.rollback()
+        return None
     rtdata=[]
     rtdata.append(columnnames)
     rtdata.extend(dbcursor.fetchall())
-    if len(rtdata)>1:
-        return rtdata#数据格式:[(列1名,列2名...),(列1数据,列2数据...),(列1数据,列2数据...)...]
+    if len(rtdata)==1:
+        return []
     else:
-        return None
+        return rtdata#数据格式:[(列1名,列2名...),(列1数据,列2数据...),(列1数据,列2数据...)...]
 
