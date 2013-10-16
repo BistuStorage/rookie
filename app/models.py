@@ -55,7 +55,7 @@ def insert_column(tablename,values,typelists):
         print "插入行："+",".join(values)+"失败！"
         return 1
 
-def intodb_xls(tablename,file):
+def insertdb_xls(tablename,file):
     global db,dbcursor
 
     rtmessage={}
