@@ -17,5 +17,10 @@ class search:
         if not f.validates():
             return render.search(f)
         else:
-            ret = models.search_all_tables(f.d.content)
-            return render.search(f,ret)
+            rtdata = models.search_all_tables(models.any2str(f.d.content))
+            if rtdata==None:
+                return render.search(f,u"数据库处理出错！")
+            elif rtdata=={}:
+                return render.search(f,u"无结果！")
+            else:
+                return render.search(f,u"本次查询结果：",rtdata)

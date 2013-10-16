@@ -1,3 +1,3 @@
 dropdb mydb
 createdb mydb
-psql -d mydb -U postgres -f init.sql
+psql -d mydb -U jwzh -f init.sql
