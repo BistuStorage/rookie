@@ -48,44 +48,52 @@ def insert_column(tablename,values,coltyps):
         return ERR_DB
     return ''
 
-def check_insert(tablename):
+def get_fields(tablename):
     global db,dbcursor
-
-    #get fields
-    cmdstr = "SELECT fields FROM dbm WHERE name='%s';" % tablename
+    cmdstr="SELECT fields FROM dbm WHERE name='%s';"%tablename
     print cmdstr
     try:
         dbcursor.execute(cmdstr)
         fields=dbcursor.fetchone()
         db.commit()
     except:
-        connect()
         db.rollback()
-        return False,ERR_DB
-    if not fields :
-        return False,ERR_TABLE_NO_EXIST
-    return True,'' 
+        return [],ERR_DB
+    if fields:
+        fields=fields[0].split(",")
+    else:
+        fields=[]
+    return fields,''
 
 def intodb_csv(tablename,filepath):
-    psqlcmd = "\COPY %s FROM '%s' DELIMITER  ',' CSV;" % (tablename,filepath)
-    cmd = '''psql %s -U %s -c "%s"''' % (config.db,config.user,psqlcmd)
+    global db,dbcursor
+    fields,msg=get_fields(tablename)
+    if msg!='':
+        return msg
+    if fields==[]:
+        return ERR_TABLE_NO_EXIST
     try:
-        print any2str(cmd)
-        os.system(any2str(cmd))    
-    except :
+        file=open(filepath,"r")
+        dbcursor.copy_from(file,tablename,sep=',')
+        file.close()
+        db.commit()
+    except:
+        db.rollback()
         return ERR_CSV
     return ''
 
 def intodb_xls(tablename,file):
     global db,dbcursor
-    suc,msg = check_insert(tablename)
-    if suc :
-        fields=fields[0].split(",")
+    
+    fields,msg=get_fields(tablename)
+    if msg!='':
+        return msg
+    if fields ==[]:
+        return ERR_TABLE_NO_EXIST
+    else:
         coltyps=[]
         for fs in fields:
             coltyps.append(any2str(fs.split('_')[1]))
-    else :
-        return msg
     #open file
     try:
         data = xlrd.open_workbook(file)
@@ -119,7 +127,6 @@ def if_table_exists(tablename):
         dbcursor.execute(cmdstr)
         rt=dbcursor.fetchall()
     except:
-        connect()
         db.rollback()
         return ERR_DB
     db.commit()
@@ -168,11 +175,10 @@ def create_table(tablename,fnames,fattrs,attrs):
     values.append(",".join([fnames[i]+"_"+fattrs[i] for i in range(len(fnames))]))#colname_attr
     rt=insert_column('dbm',tuple(values),tuple(typelists))
     if rt!='':
-        #       insert into dbm fail
-        connect()
+        #insert into dbm fail
         db.rollback()
         return rt
-#   create table and insert into dbm must be one
+    #create table and insert into dbm must be one
     db.commit()
     return ''
 

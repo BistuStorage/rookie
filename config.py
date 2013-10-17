@@ -8,8 +8,8 @@ render = web.template.render('templates/',base='base')
 
 #import os
 #UPLOADDIR = os.path.realpath(__file__) + "/uploadfile"
-UPLOADDIR = "/home/jwzh/Github/rookie/uploadfile"
+UPLOADDIR = "/home/client/Desktop/new/tyro/uploadfile"
 
 db = 'mydb'
-user = 'jwzh'
+user = 'postgres'
 
