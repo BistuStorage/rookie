@@ -6,8 +6,8 @@ import config
 import os
 from msg import *
 
-dbcursor=None
-db=None
+dbcursor = None
+db = None
 
 datatype = ['smallint','integer','bigint','real','numeric','double','serial','bigserial','text','date','time','boolean']
 strdatatype=['text']
@@ -29,7 +29,7 @@ def any2str(data):
         return data.encode('utf-8')
     else:
         return str(data)
-
+# values is list 
 def insert_column(tablename,values,coltyps):
     global db,dbcursor
 
@@ -102,7 +102,7 @@ def intodb_xls(tablename,file):
         values=[]
         for c in xrange(table.ncols):
             values.append(any2str(table.row(r)[c].value))
-        rt=insert_column(tablename,tuple(values),tuple(coltyps))
+        rt=insert_column(tablename,values,coltyps)
         if rt=='':
             nsuc+=1
         else:
@@ -166,7 +166,7 @@ def create_table(tablename,fnames,fattrs,attrs):
     typelists=['text','text']
     values=[tablename]#tablename
     values.append(",".join([fnames[i]+"_"+fattrs[i] for i in range(len(fnames))]))#colname_attr
-    rt=insert_column('dbm',tuple(values),tuple(typelists))
+    rt=insert_column(config.DBM,(values),(typelists))
     if rt!='':
         #       insert into dbm fail
         connect()
@@ -245,3 +245,5 @@ def search_one_table(tablename,columnnames,content):
         #数据格式:[(列1名,列2名...),(列1数据,列2数据...),(列1数据,列2数据...)...]
         return rtdata
 
+def get_field_name(tbname):
+    

@@ -10,5 +10,5 @@ ERR_PK = u"主键非空时，其值必须是一个或多个列名，多个时用
 ERR_CSV= u"CSV文件导入失败"
 ERR_TABLE_NAME = u"表名格式：中文、英文、数字、下划线，文件非空！"
 ERR_COL_EDIT = u"请按照要求填写！"
-
+ERR_NOTNULL = u"输入不能为空"
 

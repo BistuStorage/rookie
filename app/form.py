@@ -36,3 +36,8 @@ def custom_form(f,num):
         f.add_input(form.Dropdown('attr' + str(idx),datatype,description=u"属性"+str(idx)))
     f.add_input(form.Textbox("primarykey",pkrules,description=u"主键"))
     return f
+
+def custom_master(f,fields):
+    for fn in fields:
+        f.add_input(form.Checkbox(fn))
+    return f
