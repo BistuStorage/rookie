@@ -23,6 +23,11 @@ search_form=form.Form(
     form.Textbox("content",form.notnull,description=""),
 )
 
+login_form=form.Form(
+    form.Textbox("username",form.notnull,description=u"用户名"),
+    form.Password("password",form.notnull,description=u"密码"),
+)
+
 class DynamicForm(form.Form):
     def add_input(self, new_input):
         list_inputs = list(self.inputs)

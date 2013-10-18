@@ -29,6 +29,24 @@ def any2str(data):
         return data.encode('utf-8')
     else:
         return str(data)
+def check_login(username,password):
+    global db,dbcursor
+
+    cmdstr="select * from users where username='%s';"%username
+    print cmdstr
+    try:
+        dbcursor.execute(cmdstr)
+        r=dbcursor.fetchone()
+        db.commit()
+    except:
+        db.rollback()
+        return ERR_DB,0
+    if not r:
+        return ERR_NOUSER_OR_PWW,0
+    passwd=r[2]
+    if passwd!=password:
+        return ERR_NOUSER_OR_PWW,0
+    return '',r[3]
 
 def insert_column(tablename,values,coltyps):
     global db,dbcursor
@@ -221,18 +239,13 @@ def search_one_table(tablename,columnnames,content):
     #rtdata([]type) if there is data.
 
     #cmdstr="SELECT * FROM "+tablename+" WHERE tokenize("+" || ' ' || ".join(columnnames)+")@@tokenize('"+content+" "+content.lower()+" "+content.upper()+"');"
-    cmdstr="SELECT * FROM "+tablename+" WHERE to_tsvector('chinesecfg',"+" || ' ' || ".join(columnnames)+")@@to_tsquery('chinesecfg','"+content+"');"
+    #cmdstr="SELECT * FROM "+tablename+" WHERE to_tsvector('chinesecfg',"+" || ' ' || ".join(columnnames)+")@@to_tsquery('chinesecfg','"+content+"');"
 
-    '''
     contentlists=content.split()
     for i in range(len(contentlists)):
         contentlists[i]="("+contentlists[i]+")"
     cnlists=list(columnnames)
-    print cnlists
-    for i in range(len(cnlists)):
-        cnlists[i]=cnlists[i]+"~*'.*("+"|".join(contentlists)+").*'"
-    cmdstr="select * from "+tablename+" where "+" or ".join(cnlists)+";"
-    '''
+    cmdstr="SELECT * FROM %s where %s ~*'.*(%s).*';"%(tablename," || ' ' || ".join(cnlists),'|'.join(contentlists))
     print cmdstr
     try:
         #执行检索
