@@ -34,9 +34,9 @@ class Import:
         msg = ''
         if not f.validates():
             msg = ERR_TABLE_NAME
-            return render.Import(f,msg)
+            return render.Import(form.uploadfile_form(),msg)#这儿必须返回新的form，不然会出错
         else:
-            msg = importdata(f.d.tablename,f.d.filetype,datafile)
-            return render.Import(f,msg)
+            msg = importdata(models.any2str(f.d.tablename),models.any2str(f.d.filetype),datafile)
+            return render.Import(form.uploadfile_form(),msg)#这儿也一样
 
 app=web.application(urls,locals())

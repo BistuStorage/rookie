@@ -1,6 +1,7 @@
 # coding=utf-8
 
 from web import form
+import models
 from models import datatype
 
 namerules=form.regexp(ur'^[a-zA-Z0-9_\u4e00-\u9fa5]*$',u'非空：中文、英文、数字、下划线')
@@ -38,6 +39,6 @@ def custom_form(f,num):
     return f
 
 def custom_master(f,fields):
-    for fn in fields:
-        f.add_input(form.Checkbox(fn))
+    for idx in range(len(fields)):
+        f.add_input(form.Checkbox(str(idx),description=fields[idx],value="anything"))
     return f

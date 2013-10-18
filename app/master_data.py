@@ -23,23 +23,31 @@ class Table:
             return render.search(f)
         else:
             raise web.seeother('/table/' + f.d.content)
+
 class Masterdata:
     def GET(self,text):
-        flist = models.get_field_name(text)
+        text = any2str(text)
+        flist,msg = models.get_fields_name(text)
         f = DynamicForm()
         custom_master(f,flist)
-        return render.master_data(f)
+        if msg == '' : 
+            msg = models.if_table_exists(text,config.MDM)
+        return render.master_data(f,msg)
 
     def POST(self,text):
-        flist = models.get_field_name()
+        text = any2str(text)
+        flist,msg = models.get_fields_name(text)
         f = DynamicForm()
         custom_master(f,flist)
-        if not f.validates():
+        if not f.validates() or msg != '':
             msg = ERR_NOTNULL
             return render.master_data(f,msg)
         else :
-            tbinfo = [any2str(text)]
-            tbinfo.append(','.join(fn for fn in flist if f[fn].checked)) 
+            tbinfo = [text]
+            fw = web.input()
+            mflist = [any2str(flist[idx]) for idx in range(len(flist)) if fw.has_key(str(idx))]
+            tbinfo.append(','.join(mflist))
+            print tbinfo[1]
             msg = models.insert_column(config.MDM,tbinfo,('text','text'))
             if msg != '':
                 return render.master_data(f,msg)

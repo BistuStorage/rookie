@@ -30,62 +30,83 @@ def any2str(data):
     else:
         return str(data)
 # values is list 
+
 def insert_column(tablename,values,coltyps):
     global db,dbcursor
 
     rvalues=list(values)
     for i in range(len(rvalues)):
-        for t in strdatatype:
-            if t==coltyps[i]:
-                rvalues[i]="'"+rvalues[i]+"'"
-                break
+        if coltyps[i] in strdatatype:
+            rvalues[i]="'"+rvalues[i]+"'"
+    
     cmdstr="insert into %s values (%s);"%(tablename,",".join(rvalues))
     print cmdstr
     try:
         dbcursor.execute(cmdstr)
     except:
+        connect()
         print "INSERT COLUNM： %s FAIL !" % (",".join(values))
         return ERR_DB
     return ''
 
-def check_insert(tablename):
-    global db,dbcursor
+def get_fields_name(tablename):
+    flist,msg = get_fields(tablename)
+    if msg != '':
+        return [],msg
+    flist = [ff.split('_')[0] for ff in flist]
+    return flist,''
 
-    #get fields
-    cmdstr = "SELECT fields FROM dbm WHERE name='%s';" % tablename
-    print cmdstr
-    try:
-        dbcursor.execute(cmdstr)
-        fields=dbcursor.fetchone()
-        db.commit()
-    except:
-        connect()
-        db.rollback()
-        return False,ERR_DB
-    if not fields :
-        return False,ERR_TABLE_NO_EXIST
-    return True,'' 
+def get_fields(tablename):
+    global db,dbcursor
+    cmdstr="SELECT fields FROM dbm WHERE name='%s';" % tablename
+    print cmdstr,type(cmdstr)
+    dbcursor.execute(cmdstr)
+    fields=dbcursor.fetchone()
+    db.commit()
+   
+#    try :
+#        dbcursor.execute(cmdstr)
+#        fields=dbcursor.fetchone()
+#        db.commit()
+#    except :
+#        connect()
+#        db.rollback()
+#        return [],ERR_DB
+    if fields:
+        fields=fields[0].split(",")
+    else:
+        fields=[]
+    return fields,''
 
 def intodb_csv(tablename,filepath):
-    psqlcmd = "\COPY %s FROM '%s' DELIMITER  ',' CSV;" % (tablename,filepath)
-    cmd = '''psql %s -U %s -c "%s"''' % (config.db,config.user,psqlcmd)
+    global db,dbcursor
+    fields,msg=get_fields(tablename)
+    if msg!='':
+        return msg
+    if fields==[]:
+        return ERR_TABLE_NO_EXIST
     try:
-        print any2str(cmd)
-        os.system(any2str(cmd))    
-    except :
+        file=open(filepath,"r")
+        dbcursor.copy_from(file,tablename,sep=',')
+        file.close()
+        db.commit()
+    except:
+        db.rollback()
         return ERR_CSV
     return ''
 
 def intodb_xls(tablename,file):
     global db,dbcursor
-    suc,msg = check_insert(tablename)
-    if suc :
-        fields=fields[0].split(",")
+    
+    fields,msg=get_fields(tablename)
+    if msg!='':
+        return msg
+    if fields ==[]:
+        return ERR_TABLE_NO_EXIST
+    else:
         coltyps=[]
         for fs in fields:
             coltyps.append(any2str(fs.split('_')[1]))
-    else :
-        return msg
     #open file
     try:
         data = xlrd.open_workbook(file)
@@ -110,16 +131,15 @@ def intodb_xls(tablename,file):
     db.commit()
     return MSG_TABLE_INSERT % (tablename,any2str(nsuc),any2str(nfai))
 
-def if_table_exists(tablename):
+def if_table_exists(tablename , metatable):
     global db,dbcursor
 
-    cmdstr="SELECT name FROM dbm WHERE name='%s' ;"%(tablename)
+    cmdstr = "SELECT name FROM %s WHERE name='%s' ;" % (metatable,tablename)
     print cmdstr
     try:
         dbcursor.execute(cmdstr)
         rt=dbcursor.fetchall()
     except:
-        connect()
         db.rollback()
         return ERR_DB
     db.commit()
@@ -132,7 +152,7 @@ def create_table(tablename,fnames,fattrs,attrs):
     global db,dbcursor
 
     #check tablename
-    rt=if_table_exists(tablename)
+    rt=if_table_exists(tablename,config.DBM)
     if rt!='':#error occur
         return rt
     #check pk
@@ -168,11 +188,10 @@ def create_table(tablename,fnames,fattrs,attrs):
     values.append(",".join([fnames[i]+"_"+fattrs[i] for i in range(len(fnames))]))#colname_attr
     rt=insert_column(config.DBM,(values),(typelists))
     if rt!='':
-        #       insert into dbm fail
-        connect()
+        #insert into dbm fail
         db.rollback()
         return rt
-#   create table and insert into dbm must be one
+    #create table and insert into dbm must be one
     db.commit()
     return ''
 
@@ -245,5 +264,3 @@ def search_one_table(tablename,columnnames,content):
         #数据格式:[(列1名,列2名...),(列1数据,列2数据...),(列1数据,列2数据...)...]
         return rtdata
 
-def get_field_name(tbname):
-    
