@@ -1,4 +1,5 @@
 $def with (content)
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,17 +38,18 @@ body {
                 <span class="icon-bar"></span>
             </a>
             <a class="brand" href="/">DATA</a>
-            <div class="btn-group pull-right">
-                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-                    <i class="icon-user"></i> Username
-                    <span class="caret"></span>
-                </a>
-                <ul class="dropdown-menu">
-                    <li><a href="#">个人资料</a></li>
-                    <li class="divider"></li>
-                    <li><a href="#">退出系统</a></li>
-                </ul>
-            </div>
+            $if session.login==True:
+                <div class="btn-group pull-right">
+                    <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="icon-user"></i> $session.username
+                        <span class="caret"></span>
+                    </a>
+                        <ul class="dropdown-menu">
+                        <li><a href="#">个人资料</a></li>
+                        <li class="divider"></li>
+                        <li><a href="/session/logout">退出系统</a></li>
+                        </ul>
+                </div>
             <div class="nav-collapse">
                 <ul class="nav">
                     <li><a href="/">首页</a></li>
@@ -58,32 +60,36 @@ body {
     </div>
 </div>
 
-<div class="container-fluid">
-    <div class="row-fluid">
-        <div class="span2">
-            <div class="well sidebar-nav">
-                <ul class="nav nav-list">
-                    <li class="nav-header">大数据处理平台</li>
-                    <li><a href="/">搜索</a></li>
-                    <li><a href="/table/createtable">定义表</a></li>
-                    <li><a href="/importdata">数据导入</a></li>
-                    <li><a href="/master/table">主数据管理</a></li>
-                </ul>
-            </div><!--/.well -->
-        </div><!--/span-->
-        <div class="span10">
-            $:content
-        </div><!--/span-->
-    </div><!--/row-->
+$if session.login==True:
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div class="span2">
+                <div class="well sidebar-nav">
+                    <ul class="nav nav-list">
+                        <li class="nav-header">大数据处理平台</li>
+                        <li><a href="/">搜索</a></li>
+                        <li><a href="/table/createtable">定义表</a></li>
+                        <li><a href="/importdata">数据导入</a></li>
+                        <li><a href="/master/table">主数据管理</a></li>
+                    </ul>
+                </div><!--/.well -->
+            </div><!--/span-->
+            <div class="span10">
+                $:content
+            </div><!--/span-->
+        </div><!--/row-->
 
-    <hr>
+        <hr>
 
-    <footer>
-        <p>&copy; Company 2012</p>
-    </footer>
+        <footer>
+            <p>&copy; Company 2012</p>
+        </footer>
 
-</div><!--/.fluid-container-->
-
+    </div><!--/.fluid-container-->
+$else:
+    <div class="span10">
+        $:content
+    </div>
 <!-- Le javascript
 ================================================== -->
 <!-- Placed at the end of the document so the pages load faster -->

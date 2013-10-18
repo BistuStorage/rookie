@@ -11,4 +11,7 @@ ERR_CSV= "CSV文件导入失败"
 ERR_TABLE_NAME = "表名格式：中文、英文、数字、下划线，文件非空！"
 ERR_COL_EDIT = "请按照要求填写！"
 ERR_NOTNULL = "输入不能为空"
-
+ERR_LOGIN_INFO = "登录信息错误！"
+ERR_NOUSER_OR_PWW = "用户或密码错误！"
+NO_RESULT = "无结果！"
+THIS_RESULT = "本次查询结果："

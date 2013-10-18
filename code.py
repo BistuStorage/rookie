@@ -2,18 +2,22 @@
 
 import web
 import sys
-from app import table, importdata, search, models, master_data
-from config import render
+from app import table, importdata, search, models, master_data, session
 
 urls=(
         '/?','app.search.search',
+        '/session',session.app,
         '/table',table.app,
         '/importdata',importdata.app,
         '/master',master_data.app
         )
+app=web.application(urls,globals())
+session=web.session.Session(app,web.session.DiskStore('sessions'),initializer={'login':False,'username':'','privilege':0})
+def session_hook():
+    web.ctx.session=session
 
+app.add_processor(web.loadhook(session_hook))
 
 if __name__== "__main__":
     models.connect()
-    app=web.application(urls,globals())
     app.run()
