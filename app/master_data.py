@@ -14,10 +14,10 @@ urls = (
 
 class Table:
     def GET(self):
-        f = form.search_form()
+        f = form.search_master_form()
         return web.template.render('templates/',base='base',globals={'session':web.ctx.session}).search(f)
     def POST(self):
-        f = form.search_form()
+        f = form.search_master_form()
         if not f.validates():
             return web.template.render('templates/',base='base',globals={'session':web.ctx.session}).search(f)
         else:

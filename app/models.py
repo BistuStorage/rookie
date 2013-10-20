@@ -38,6 +38,10 @@ def get_userinfo(username):
     #then check query result if []
     cmdstr="select * from users where username='%s';"%username
     print cmdstr
+    dbcursor.execute(cmdstr)
+    r=dbcursor.fetchone()
+    db.commit()
+
     try:
         dbcursor.execute(cmdstr)
         r=dbcursor.fetchone()
@@ -353,7 +357,7 @@ def search_one_table(tablename,columnnames,content):
     for i in range(len(contentlists)):
         contentlists[i]="("+contentlists[i]+")"
     cnlists=list(columnnames)
-    cmdstr="SELECT * FROM %s where %s ~*'.*(%s).*';"%(tablename," || ' ' || ".join(cnlists),'|'.join(contentlists))
+    cmdstr="SELECT %s FROM %s where %s ~*'.*(%s).*';"%(','.join(cnlists),tablename," || ' ' || ".join(cnlists),'|'.join(contentlists))
     print cmdstr
     try:
         #执行检索

@@ -25,7 +25,9 @@ search_form=form.Form(
     form.Textbox("content",notnullrule,description="搜索内容"),
     form.Checkbox("ismaster",description=u"主数据搜索"),
 )
-
+search_master_form = form.Form(
+    form.Textbox("content",notnullrule,description="输入表名"),
+)
 login_form=form.Form(
     form.Textbox("username",notnullrule,description=u"用户名"),
     form.Password("password",notnullrule,description=u"密码"),

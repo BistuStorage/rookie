@@ -9,7 +9,7 @@ web.internalerror=web.debugerror
 UPLOADDIR = "uploadfile"
 
 db = 'mydb'
-user = 'postgres'
+user = 'jwzh'
 
 DBM='DBM'
 MDM='MDM'
