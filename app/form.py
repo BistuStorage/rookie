@@ -1,12 +1,13 @@
 # coding=utf-8
 
 from web import form
-import models
 from models import datatype
 
-namerules=form.regexp(ur'^[a-zA-Z0-9_\u4e00-\u9fa5]*$',u'非空：中文、英文、数字、下划线')
+namerules=form.regexp(ur'^[a-zA-Z0-9_\u4e00-\u9fa5]{1,520}$',u'非空：中文、英文、数字、下划线')
 colnumrules=form.regexp(r'^[1-9][0-9]?$',u'必须是数字，且为1-99')
-pkrules=form.regexp(ur'^[a-zA-Z0-9_,\u4e00-\u9fa5]*$',u'非空：中文、英文、数字、下划线、逗号')
+pkrules=form.regexp(ur'^[a-zA-Z0-9_,\u4e00-\u9fa5]{0,520}$',u'可空：中文、英文、数字、下划线、逗号')
+invcodrules=form.regexp(r'^[a-zA-Z0-9]{10,10}$',u"10位邀请码")
+notnullrule=form.regexp(r'^.+$',u"不能为空")
 filetype = ['xls','csv']
 
 table_form = form.Form(
@@ -21,12 +22,21 @@ uploadfile_form = form.Form(
 )
 
 search_form=form.Form(
-    form.Textbox("content",form.notnull,description=""),
+    form.Textbox("content",notnullrule,description="搜索内容"),
+    form.Checkbox("ismaster",description=u"主数据搜索"),
 )
 
 login_form=form.Form(
-    form.Textbox("username",form.notnull,description=u"用户名"),
-    form.Password("password",form.notnull,description=u"密码"),
+    form.Textbox("username",notnullrule,description=u"用户名"),
+    form.Password("password",notnullrule,description=u"密码"),
+)
+
+register_form=form.Form(
+    form.Textbox("username",namerules,description=u"用户名"),
+    form.Password("password",notnullrule,description=u"密码"),
+    form.Password("confirm",notnullrule,description=u"确认密码"),
+    form.Password("invcod",invcodrules,description=u"邀请码"),
+    validators=[form.Validator(u"两次密码不一致！",lambda i: i.password==i.confirm)]
 )
 
 class DynamicForm(form.Form):

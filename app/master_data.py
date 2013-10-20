@@ -48,6 +48,7 @@ class Masterdata:
             tbinfo.append(','.join(mflist))
             print tbinfo[1]
             msg = models.insert_column(config.MDM,tbinfo,('text','text'))
+            models.db.commit()
             if msg != '':
                 return web.template.render('templates/',base='base',globals={'session':web.ctx.session}).master_data(f,msg)
             else :

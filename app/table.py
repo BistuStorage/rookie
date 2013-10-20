@@ -5,6 +5,7 @@ import form
 from form import DynamicForm,custom_form
 import models
 import re
+from msg import *
 
 urls = (
         '/createtable/?','createtable',

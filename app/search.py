@@ -26,10 +26,14 @@ class search:
     def POST(self):
         if web.ctx.session.login==True:
             f = form.search_form()
+            alldata=web.input()
             if not f.validates():
                 return web.template.render('templates/',base='base',globals={'session':web.ctx.session}).search(f)
             else:
-                rtdata = models.search_all_tables(models.any2str(f.d.content))
+                if alldata.has_key('ismaster'):
+                    rtdata=models.search_master(models.any2str(f.d.content))
+                else:
+                    rtdata = models.search_all_tables(models.any2str(f.d.content))
                 if rtdata==None:
                     return web.template.render('templates/',base='base',globals={'session':web.ctx.session}).search(f,ERR_DB)
                 elif rtdata=={}:

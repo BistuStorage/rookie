@@ -6,8 +6,8 @@ import config
 import os
 from msg import *
 
-dbcursor = None
-db = None
+dbcursor=None
+db=None
 
 datatype = ['smallint','integer','bigint','real','numeric','double','serial','bigserial','text','date','time','boolean']
 strdatatype=['text']
@@ -29,11 +29,33 @@ def any2str(data):
         return data.encode('utf-8')
     else:
         return str(data)
-# values is list 
-def check_login(username,password):
-    global db,dbcursor
 
+def get_userinfo(username):
+    global db,dbcursor
+    #return value:
+    #error message,query result
+    #first check if error message is ''
+    #then check query result if []
     cmdstr="select * from users where username='%s';"%username
+    print cmdstr
+    try:
+        dbcursor.execute(cmdstr)
+        r=dbcursor.fetchone()
+        db.commit()
+    except:
+        db.rollback()
+        return ERR_DB,[]
+    if not r:
+        return '',[]
+    return '',r
+
+def check_invcod(invcod): 
+    global db,dbcursor
+    #return value:
+    #error message,privilege code
+    #first check if error message is null,if is null,then error occur
+    #then check if query result is null, if is null,then no invcod
+    cmdstr="select privilege from invitation_code where code='%s';"%(invcod)
     print cmdstr
     try:
         dbcursor.execute(cmdstr)
@@ -43,53 +65,105 @@ def check_login(username,password):
         db.rollback()
         return ERR_DB,0
     if not r:
+        return '',0
+    return '',r[0]
+
+def create_newuser(username,password,privilege,invcod):
+    global db,dbcursor
+    
+    #insert into users
+    cmdstr="insert into users(username,password,privilege) values('%s','%s',%s);"%(username,password,privilege)
+    print cmdstr
+    try:
+        dbcursor.execute(cmdstr)
+    except:
+        db.rollback()
+        return ERR_DB
+    #delete invcod from invitation_code
+    cmdstr="delete from invitation_code where code='%s';"%invcod
+    print cmdstr
+    try:
+        dbcursor.execute(cmdstr)
+        db.commit()
+    except:
+        db.rollback()
+        return ERR_DB
+    return ''
+
+def check_login(username,password):
+    global db,dbcursor
+    #return value:
+    #error message,privilege
+    #check username
+    msg,ui=get_userinfo(username)
+    if msg!='':
+        return msg,0
+    elif ui==[]:
         return ERR_NOUSER_OR_PWW,0
-    passwd=r[2]
+    #check password
+    passwd=ui[2]
     if passwd!=password:
         return ERR_NOUSER_OR_PWW,0
-    return '',r[3]
+    return '',ui[3]
 
+def check_register(username,password,invcod):
+    global db,dbcursor
+    #return value:
+    #error message
+    #check username
+    msg,ui=get_userinfo(username)
+    if msg!='':
+        return msg
+    elif ui!=[]:
+        return ERR_USER_EXIST
+    #check invcod
+    msg,pri=check_invcod(invcod)
+    if msg!='':
+        return msg
+    elif pri==0:
+        return ERR_WR_INVCOD
+    #create new user
+    msg=create_newuser(username,password,pri,invcod)
+    if msg!='':
+        return msg
+    return ''
+        
 def insert_column(tablename,values,coltyps):
     global db,dbcursor
 
     rvalues=list(values)
     for i in range(len(rvalues)):
-        if coltyps[i] in strdatatype:
-            rvalues[i]="'"+rvalues[i]+"'"
-    
+        for t in strdatatype:
+            if t==coltyps[i]:
+                rvalues[i]="'"+rvalues[i]+"'"
+                break
     cmdstr="insert into %s values (%s);"%(tablename,",".join(rvalues))
     print cmdstr
     try:
         dbcursor.execute(cmdstr)
     except:
-        connect()
         print "INSERT COLUNM： %s FAIL !" % (",".join(values))
         return ERR_DB
     return ''
 
 def get_fields_name(tablename):
-    flist,msg = get_fields(tablename)
-    if msg != '':
+    flist,msg=get_fields(tablename)
+    if msg!='':
         return [],msg
-    flist = [ff.split('_')[0] for ff in flist]
+    flist=[ff.split('_')[0] for ff in flist]
     return flist,''
 
 def get_fields(tablename):
     global db,dbcursor
-    cmdstr="SELECT fields FROM dbm WHERE name='%s';" % tablename
-    print cmdstr,type(cmdstr)
-    dbcursor.execute(cmdstr)
-    fields=dbcursor.fetchone()
-    db.commit()
-   
-#    try :
-#        dbcursor.execute(cmdstr)
-#        fields=dbcursor.fetchone()
-#        db.commit()
-#    except :
-#        connect()
-#        db.rollback()
-#        return [],ERR_DB
+    cmdstr="SELECT fields FROM dbm WHERE name='%s';"%tablename
+    print cmdstr
+    try:
+        dbcursor.execute(cmdstr)
+        fields=dbcursor.fetchone()
+        db.commit()
+    except:
+        db.rollback()
+        return [],ERR_DB
     if fields:
         fields=fields[0].split(",")
     else:
@@ -141,7 +215,7 @@ def intodb_xls(tablename,file):
         values=[]
         for c in xrange(table.ncols):
             values.append(any2str(table.row(r)[c].value))
-        rt=insert_column(tablename,values,coltyps)
+        rt=insert_column(tablename,tuple(values),tuple(coltyps))
         if rt=='':
             nsuc+=1
         else:
@@ -149,10 +223,10 @@ def intodb_xls(tablename,file):
     db.commit()
     return MSG_TABLE_INSERT % (tablename,any2str(nsuc),any2str(nfai))
 
-def if_table_exists(tablename , metatable):
+def if_table_exists(tablename,metatable):
     global db,dbcursor
 
-    cmdstr = "SELECT name FROM %s WHERE name='%s' ;" % (metatable,tablename)
+    cmdstr="SELECT name FROM %s WHERE name='%s' ;"%(metatable,tablename)
     print cmdstr
     try:
         dbcursor.execute(cmdstr)
@@ -204,7 +278,7 @@ def create_table(tablename,fnames,fattrs,attrs):
     typelists=['text','text']
     values=[tablename]#tablename
     values.append(",".join([fnames[i]+"_"+fattrs[i] for i in range(len(fnames))]))#colname_attr
-    rt=insert_column(config.DBM,(values),(typelists))
+    rt=insert_column('dbm',tuple(values),tuple(typelists))
     if rt!='':
         #insert into dbm fail
         db.rollback()
@@ -213,6 +287,28 @@ def create_table(tablename,fnames,fattrs,attrs):
     db.commit()
     return ''
 
+def search_master(content):
+    global db,dbcursor
+
+    cmdstr="SELECT * FROM %s;"%config.MDM
+    print cmdstr
+    try:
+        dbcursor.execute(cmdstr)
+        mdmdata=dbcursor.fetchall()
+        db.commit()
+    except:
+        db.rollback()
+        return None
+    rtdata={}
+    for table in mdmdata:
+        collists=table[1].split(',')
+        tmpdata=search_one_table(any2str(table[0]),tuple(collists),content)
+        if tmpdata:
+            rtdata[table[0]]=tmpdata
+        elif tmpdata==None:
+            return None
+    return rtdata
+
 def search_all_tables(content):
     global db,dbcursor
     #return value:
@@ -220,14 +316,13 @@ def search_all_tables(content):
     #{} if no result.
     #rtdata({}type) if there is data.
 
-    cmdstr="SELECT * FROM DBM;"
+    cmdstr="SELECT * FROM %s;"%config.DBM
     print cmdstr
     try:
         dbcursor.execute(cmdstr)
         dbmdata=dbcursor.fetchall()
         db.commit()
     except:
-        connect()
         db.rollback()
         return None#db error
     rtdata={}

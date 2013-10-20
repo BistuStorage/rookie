@@ -2,7 +2,7 @@
 
 import web
 import sys
-from app import table, importdata, search, models, master_data, session
+from app import table, importdata, search, models,session,master_data
 
 urls=(
         '/?','app.search.search',
@@ -15,7 +15,6 @@ app=web.application(urls,globals())
 session=web.session.Session(app,web.session.DiskStore('sessions'),initializer={'login':False,'username':'','privilege':0})
 def session_hook():
     web.ctx.session=session
-
 app.add_processor(web.loadhook(session_hook))
 
 if __name__== "__main__":

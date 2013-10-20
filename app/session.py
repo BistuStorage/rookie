@@ -6,6 +6,7 @@ from msg import *
 
 urls=(
     '/login/?','login',
+    '/register/?','register',
     '/logout/?','logout'
     )
 app=web.application(urls,locals())
@@ -19,7 +20,6 @@ app=web.application(urls,locals())
 #       作为每个类里面的类成员也不行，只有return时直接用
 
 class login:
-
     def GET(self):
         if web.ctx.session.login==True:
             raise web.seeother("/../")
@@ -45,8 +45,25 @@ class login:
                     raise web.seeother("/../")
         else:
             raise web.seeother("/../")
+
 class logout:
     def GET(self):
         if web.ctx.session.login==True:
             web.ctx.session.kill()
         raise web.seeother("/../")
+
+class register:
+    def GET(self):
+        f=form.register_form()
+        return web.template.render('templates/',base='base',globals={'session':web.ctx.session}).register(f)
+    def POST(self):
+        f=form.register_form()
+        if not f.validates():
+            return web.template.render('templates/',base='base',globals={'session':web.ctx.session}).register(f)
+        else:
+            reginfo=web.input()
+            msg=models.check_register(reginfo.username,reginfo.password,reginfo.invcod)
+            if msg!='':
+                return web.template.render('templates/',base='base',globals={'session':web.ctx.session}).register(f,msg)
+            else:
+                raise web.seeother("/../")
