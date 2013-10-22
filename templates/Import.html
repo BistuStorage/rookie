@@ -1,0 +1,8 @@
+$def with(form,msg='')
+
+<p>$msg</p>
+<form method="post" enctype="multipart/form-data">
+$:form.render()
+<p>(导入csv文件需要指定列分割符,不要有多余空格)</p>
+<input type="submit" value="导入" />
+</form>

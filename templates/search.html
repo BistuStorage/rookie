@@ -1,24 +1,18 @@
-$def with(argvdic)
+$def with(form,msg='',rt={})
 
-<form method="post">
-<input type="text" name="content" />
-<input type="submit" name="search" value="搜索" />
+<form method="POST">
+$:form.render()
+<input type="submit" value="搜索" />
 </form>
-
-<!--<input type="button" value="import from excel" onclick="window.location.href='/importdata/fromexcel'" />
-<a class="btn btn-success" href="/table/createtable"><span class=" icon-white"></span>创建表</a>
--->
-$if 'rtdata' in argvdic: 
-    $if argvdic['rtdata']:
-        $for tablename in argvdic['rtdata']:
-            <p>表$tablename搜索结果：</p>
-            <table border="1" width="100%">
-            $for rd in argvdic['rtdata'][tablename]:
-                <tr>
-                $for each in rd:
-                    <td>$each</td>
-                </tr>
-            </table>
-    $else:
-        <p>无结果！</p>
+<p>$msg</p>
+$if rt: 
+    $for tablename in rt:
+        <p>表$tablename搜索结果：</p>
+        <table border="1" width="100%">
+        $for rd in rt[tablename]:
+            <tr>
+            $for each in rd:
+                <td>$each</td>
+            </tr>
+        </table>
 

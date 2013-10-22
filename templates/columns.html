@@ -1,7 +1,7 @@
-$def with (form)
+$def with (form,msg='')
 
-<form name="main" method="post"> 
-$if not form.valid: <p class="error">Try again</p>
+<p>$msg</p>
+<form  method="post"> 
 $:form.render()
-<input type="submit" />
+<input type="submit" value="创建" />
 </form>

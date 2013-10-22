@@ -1,6 +1,6 @@
-$def with(form,message)
+$def with(form,msg='')
 
-$if message: <p>$message</p>
+<p>$msg</p>
 <form method="post" enctype="multipart/form-data">
 $:form.render()
 <input type="submit" value="导入" />

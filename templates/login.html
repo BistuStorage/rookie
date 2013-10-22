@@ -1,0 +1,8 @@
+$def with(form,msg='')
+
+<p>$msg</p>
+<form method="post">
+$:form.render()
+<input type="submit" value="登录" />
+</form>
+<a href="/session/register">注册</a>
