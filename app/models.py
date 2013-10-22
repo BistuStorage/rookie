@@ -174,7 +174,7 @@ def get_fields(tablename):
         fields=[]
     return fields,''
 
-def intodb_csv(tablename,filepath):
+def intodb_csv(tablename,filepath,sep):
     global db,dbcursor
     fields,msg=get_fields(tablename)
     if msg!='':
@@ -183,7 +183,7 @@ def intodb_csv(tablename,filepath):
         return ERR_TABLE_NO_EXIST
     try:
         file=open(filepath,"r")
-        dbcursor.copy_from(file,tablename,sep=',')
+        dbcursor.copy_from(file,tablename,sep=sep)
         file.close()
         db.commit()
     except:

@@ -20,7 +20,7 @@ app=web.application(urls,locals())
 #       也就是说只有在线程中调用，所以不能在任何线程用不到的地方定义，
 #       作为每个类里面的类成员也不行，只有return时直接用
 
-def importdata(tablename,filetype,datafile):
+def importdata(tablename,filetype,datafile,sep):
     filepath = datafile.filename.replace('\\','/')
     filename = filepath.split('/')[-1]
     try:
@@ -33,7 +33,7 @@ def importdata(tablename,filetype,datafile):
     if filetype == 'xls':    
         msg = models.intodb_xls(tablename,UPLOADDIR+'/'+filename)
     elif filetype == 'csv':
-        msg = models.intodb_csv(tablename,UPLOADDIR+'/'+filename)
+        msg = models.intodb_csv(tablename,UPLOADDIR+'/'+filename,sep)
     return msg
 
 class Import:
@@ -43,7 +43,7 @@ class Import:
             return web.template.render('templates/',base='base',globals={'session':web.ctx.session}).Import(f)
         else:
             raise web.seeother("/../")
-
+            
     def POST(self):
         if web.ctx.session.login==True:
             f = form.uploadfile_form()
@@ -53,7 +53,7 @@ class Import:
                 msg = ERR_TABLE_NAME
                 return web.template.render('templates/',base='base',globals={'session':web.ctx.session}).Import(form.uploadfile_form(),msg)#这儿必须返回新的form，不然会出错
             else:
-                msg = importdata(models.any2str(f.d.tablename),models.any2str(f.d.filetype),datafile)
+                msg = importdata(models.any2str(f.d.tablename),models.any2str(f.d.filetype),datafile,models.any2str(f.d.sep))
                 return web.template.render('templates/',base='base',globals={'session':web.ctx.session}).Import(form.uploadfile_form(),msg)#这儿也一样
         else:
             raise web.seeother("/../")

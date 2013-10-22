@@ -19,6 +19,7 @@ uploadfile_form = form.Form(
     form.Textbox("tablename",namerules,description=u"表名"),
     form.Dropdown('filetype',filetype,description=u"文件类型"),
     form.File("datafile",form.notnull,description=u"文件"),
+    form.Textbox("sep",description=u"列间隔")
 )
 
 search_form=form.Form(
